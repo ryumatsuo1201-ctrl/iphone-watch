@@ -2,12 +2,17 @@ name: refurb-iphone-watch
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # 5分ごと（UTC基準。GitHub側の都合で数分〜十数分遅れることがあります）
+    - cron: "23 * * * *"   # 予備：1時間に1回（メインはcron-job.orgから5分ごとに起動）
   workflow_dispatch:
     inputs:
       max_price:
         description: "通知する上限価格（テスト時に変更可）"
         default: "100000"
+
+# 同時に2つ動かないようにする（二重通知を防ぐ）
+concurrency:
+  group: refurb-iphone-watch
+  cancel-in-progress: false
 
 permissions:
   contents: write
