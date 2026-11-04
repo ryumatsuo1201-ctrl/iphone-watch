@@ -1,0 +1,38 @@
+name: refurb-iphone-watch
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # 5分ごと（UTC基準。GitHub側の都合で数分〜十数分遅れることがあります）
+  workflow_dispatch:
+    inputs:
+      max_price:
+        description: "通知する上限価格（テスト時に変更可）"
+        default: "100000"
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests beautifulsoup4
+      - run: python check_refurb.py
+        env:
+          MAX_PRICE: ${{ inputs.max_price || '100000' }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+      - name: 通知済みリストを保存
+        run: |
+          if [[ -n "$(git status --porcelain notified.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add notified.json
+            git commit -m "update notified items"
+            git push
+          fi
